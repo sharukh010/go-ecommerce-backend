@@ -35,7 +35,7 @@ func AddAddress() gin.HandlerFunc{
 		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
 		defer cancel() 
 
-		match_filter := bson.D{{Key:"$match",Value: bson.D{primitive.E{Key:"_id",Value: address.Address_id}}}}
+		match_filter := bson.D{{Key:"$match",Value: bson.D{primitive.E{Key:"_id",Value: user_ID}}}}
 		unwind := bson.D{{Key:"$unwind",Value:bson.D{primitive.E{Key:"path",Value: "$address"}}}}
 		group := bson.D{{Key:"$group",Value: bson.D{primitive.E{Key:"_id",Value: "$address_id"},{Key:"count",Value: bson.D{primitive.E{Key: "$sum",Value: 1}}}}}}
 
@@ -58,7 +58,7 @@ func AddAddress() gin.HandlerFunc{
 		}
 
 		if size < 2 {
-			filter := bson.D{primitive.E{Key:"_id",Value:address.Address_id}}
+			filter := bson.D{primitive.E{Key:"_id",Value:user_ID}}
 			update := bson.D{{Key:"$push",Value: bson.D{primitive.E{Key:"address",Value: address}}}}
 			_,err := UserCollection.UpdateOne(ctx,filter,update)
 			if err != nil {
