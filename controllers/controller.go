@@ -148,7 +148,36 @@ func ProductViewerAdmin() gin.HandlerFunc{
 }
 
 func SearchProduct() gin.HandlerFunc{
+	return func(c *gin.Context){
+		var productList []models.Product
+		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
+		defer cancel()
+		cursor,err := ProductCollection.Find(ctx,bson.D{{}})
 
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError,"Something Went Wrong Please try again later")
+			return 
+		}
+
+		err = cursor.All(ctx,&productList)
+
+		if err != nil {
+			log.Println(err.Error())
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return 
+		}
+
+		defer cursor.Close(ctx)
+
+		if err := cursor.Err(); err != nil  {
+			log.Println(err)
+			c.IndentedJSON(http.StatusBadRequest,"Invalid Request")
+			return 
+		}
+
+		c.IndentedJSON(http.StatusOK,productList)
+
+	}
 }
 
 func SearchProductByQuery() gin.HandlerFunc {
