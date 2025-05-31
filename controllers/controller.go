@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/sharukh010/go-ecommerce/database"
 	"github.com/sharukh010/go-ecommerce/models"
+	generate "github.com/sharukh010/go-ecommerce/tokens"
 )
 
 var UserCollection *mongo.Collection = database.UserData(database.Client,"Users")
@@ -85,10 +87,11 @@ func SignUp() gin.HandlerFunc{
 		user.Updated_At,_ = time.Parse(time.RFC3339,time.Now().Format(time.RFC3339))
 		user.ID = primitive.NewObjectID()
 		user.User_ID = user.ID.Hex()
-		/*
-		need to write token logic
-		
-		*/
+	
+		token,refreshToken,_ := generate.TokenGenerator(*user.Email,*user.First_Name,*user.Last_Name,user.User_ID)
+
+		user.Token = &token 
+		user.Refresh_Token = &refreshToken
 
 		user.UserCart = make([]models.ProductUser,0)
 		user.Address_Details = make([]models.Address,0)
@@ -106,7 +109,30 @@ func SignUp() gin.HandlerFunc{
 }
 
 func Login() gin.HandlerFunc{
-
+	return func(c *gin.Context){
+		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
+		defer cancel() 
+		var user models.User 
+		var foundUser models.User 
+		if err := c.BindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest,gin.H{"error":err.Error()})
+			return 
+		}
+		err := UserCollection.FindOne(ctx,bson.M{"email":user.Email}).Decode(&foundUser)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Invalid credentials"})
+			return 
+		}
+		PasswordIsValid,msg := VerifyPassword(*user.Password,*foundUser.Password)
+		if !PasswordIsValid {
+			c.JSON(http.StatusInternalServerError,gin.H{"error":msg})
+			fmt.Println(msg)
+			return 
+		}
+		token,refreshToken,_ := generate.TokenGenerator(*foundUser.Email,*foundUser.First_Name,*foundUser.Last_Name,foundUser.User_ID)
+		generate.UpdateAllTokens(token,refreshToken,foundUser.User_ID)
+		c.JSON(http.StatusFound,foundUser)
+	}
 }
 
 func ProductViewerAdmin() gin.HandlerFunc{
