@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/sharukh010/go-ecommerce/controllers"
 	"github.com/sharukh010/go-ecommerce/database"
 	middleware "github.com/sharukh010/go-ecommerce/middlewares"
@@ -13,6 +14,10 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env File")
+	}
 	port := os.Getenv("PORT")
 	if port == ""{
 		port = "8000"
