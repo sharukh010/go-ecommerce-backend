@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -151,5 +152,42 @@ func SearchProduct() gin.HandlerFunc{
 }
 
 func SearchProductByQuery() gin.HandlerFunc {
-	
+	return func(c *gin.Context){
+		var SearchProducts []models.Product
+		queryParam := c.Query("name")
+		if queryParam == ""{
+			log.Println("Query is empty")
+			c.Header("Content-Type","Application/json")
+			c.JSON(http.StatusNotFound,gin.H{"Error":"Invalid Search Index"})
+			c.Abort()
+			return 
+		}
+		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
+		defer cancel()
+
+		searchQueryDB,err := ProductCollection.Find(ctx,bson.M{"product_name":bson.M{"$regex":queryParam}})
+
+		if err != nil {
+			c.IndentedJSON(http.StatusNotFound,"Product not found")
+			return 
+		}
+
+		err = searchQueryDB.All(ctx,&SearchProducts)
+		if err != nil {
+			log.Println(err.Error())
+			c.IndentedJSON(http.StatusBadRequest,"Invalid Request")
+			return 
+		}
+
+		defer searchQueryDB.Close(ctx)
+
+		if err := searchQueryDB.Err(); err != nil {
+			log.Println(err)
+			c.IndentedJSON(http.StatusBadRequest,"Invalid Request")
+			return 
+		}
+		c.IndentedJSON(http.StatusOK,SearchProducts)
+
+
+	}
 }
