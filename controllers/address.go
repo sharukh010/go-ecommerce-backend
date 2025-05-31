@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,10 +10,65 @@ import (
 	"github.com/sharukh010/go-ecommerce/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func AddAddress() gin.HandlerFunc{
+	return func(c *gin.Context){
+		user_id := c.Query("id")
+		if user_id == ""{
+			c.JSON(http.StatusBadRequest,gin.H{"error":"User ID required"})
+			return 
+		}
+		user_ID,err := primitive.ObjectIDFromHex(user_id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
+			return 
+		}
+		var address models.Address
+		address.Address_id = primitive.NewObjectID()
+		if err = c.BindJSON(&address); err != nil {
+			c.JSON(http.StatusBadRequest,gin.H{"error":err.Error()})
+			return 
+		}
 
+		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
+		defer cancel() 
+
+		match_filter := bson.D{{Key:"$match",Value: bson.D{primitive.E{Key:"_id",Value: address.Address_id}}}}
+		unwind := bson.D{{Key:"$unwind",Value:bson.D{primitive.E{Key:"path",Value: "$address"}}}}
+		group := bson.D{{Key:"$group",Value: bson.D{primitive.E{Key:"_id",Value: "$address_id"},{Key:"count",Value: bson.D{primitive.E{Key: "$sum",Value: 1}}}}}}
+
+		pointCursor,err := UserCollection.Aggregate(ctx,mongo.Pipeline{match_filter,unwind,group})
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Something went wrong"})
+			return 
+		}
+
+		var addressInfo []bson.M 
+		if err = pointCursor.All(ctx,&addressInfo); err != nil {
+			panic(err)
+		}
+
+		var size int32 
+		for _,address_no := range addressInfo{
+			count := address_no["count"]
+			size = count.(int32)
+		}
+
+		if size < 2 {
+			filter := bson.D{primitive.E{Key:"_id",Value:address.Address_id}}
+			update := bson.D{{Key:"$push",Value: bson.D{primitive.E{Key:"address",Value: address}}}}
+			_,err := UserCollection.UpdateOne(ctx,filter,update)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}else{
+			c.JSON(http.StatusBadRequest,"Not allowed")
+		}
+
+	}
 }
 
 func EditHomeAddress() gin.HandlerFunc{
