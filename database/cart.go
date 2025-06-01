@@ -1,6 +1,14 @@
 package database
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"log"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 var (
 	ErrCantFindProduct = errors.New("can't find product")
@@ -16,7 +24,19 @@ func AddProductToCart() {
 
 }
 
-func RemoveCartItem() {
+func RemoveCartItem(ctx context.Context,userCollection *mongo.Collection,productID primitive.ObjectID,userID string)error {
+	id,err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrUserIDIsNotValid
+	}
+	filter := bson.D{primitive.E{Key:"_id",Value:id}}
+	update := bson.M{"$pull":bson.M{"usercart":bson.M{"_id":productID}}}
+	_,err = userCollection.UpdateMany(ctx,filter,update)
+	if err != nil {
+		return ErrCantRemoveItem
+	}
+	return nil 
 
 }
 
