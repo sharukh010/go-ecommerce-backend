@@ -22,8 +22,28 @@ var (
 	ErrCantBuyCartItem = errors.New("cannot update the purchase")
 )
 
-func AddProductToCart() {
+func AddProductToCart(ctx context.Context,prodCollection,userCollection *mongo.Collection,productID primitive.ObjectID,userID string) error {
+	id,err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrUserIDIsNotValid
+	}
+	
+	var product models.ProductUser
+	err = prodCollection.FindOne(ctx,bson.M{"_id":productID}).Decode(&product)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrCantFindProduct
+	}
+	filter := bson.M{"_id":id}
+	update := bson.M{"$push":bson.M{"usercart":product}}
 
+	_,err = userCollection.UpdateOne(ctx,filter,update)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrCantUpdateUser
+	}
+	return nil 
 }
 
 func RemoveCartItem(ctx context.Context,userCollection *mongo.Collection,productID primitive.ObjectID,userID string)error {
@@ -79,7 +99,4 @@ func InstantBuyer(ctx context.Context,prodCollection,userCollection *mongo.Colle
 		return ErrCantBuyCartItem
 	}
 	return nil 
-
-
-
 }
