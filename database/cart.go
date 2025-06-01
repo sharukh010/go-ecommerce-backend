@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
+	"github.com/sharukh010/go-ecommerce/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,6 +46,40 @@ func BuyItemFromCart() {
 
 }
 
-func InstantBuyer() {
+func InstantBuyer(ctx context.Context,prodCollection,userCollection *mongo.Collection,productID primitive.ObjectID,userID string) error{
+	id,err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrUserIDIsNotValid
+	}
+	var productDetails models.ProductUser
+	var orderDetails models.Order 
+	orderDetails.Order_ID = primitive.NewObjectID()
+	orderDetails.Orderered_At = time.Now()
+	orderDetails.Order_Cart = make([]models.ProductUser,0)
+	orderDetails.Payment_Method.COD = true 
+	err = prodCollection.FindOne(ctx,bson.D{primitive.E{Key:"_id",Value:productID}}).Decode(&productDetails)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrCantFindProduct
+	}
+	orderDetails.Price = productDetails.Price
+	filter := bson.D{primitive.E{Key:"_id",Value:id}}
+	update := bson.D{{Key:"$push",Value:bson.D{primitive.E{Key:"orders",Value:orderDetails}}}}
+	_,err = userCollection.UpdateOne(ctx,filter,update)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrCantBuyCartItem
+	}
+	filter2 := bson.D{primitive.E{Key:"_id",Value:id}}
+	update2 := bson.M{"$push":bson.M{"orders.$[].order_list":productDetails}}
+	_,err = userCollection.UpdateOne(ctx,filter2,update2)
+	if err != nil {
+		log.Println(err.Error())
+		return ErrCantBuyCartItem
+	}
+	return nil 
+
+
 
 }
