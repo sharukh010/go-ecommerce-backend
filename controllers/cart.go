@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -11,6 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var (
+	ErrProductIDRequired = errors.New("Product ID required")
+	ErrUserIDRequired = errors.New("User ID required")
+
+
+)
 type Application struct {
 	prodCollection *mongo.Collection
 	userCollection *mongo.Collection
@@ -27,12 +34,12 @@ func (app *Application) AddToCart() gin.HandlerFunc{
 	return func(c *gin.Context){
 		productQueryID := c.Query("id")
 		if productQueryID == ""{
-			c.JSON(http.StatusBadRequest,"Product ID required")
+			c.JSON(http.StatusBadRequest,ErrProductIDRequired.Error())
 			return 
 		}
 		userQueryID := c.Query("userid")
 		if userQueryID == ""{
-			c.JSON(http.StatusBadRequest,"User ID required")
+			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
 		}
 		productID,err := primitive.ObjectIDFromHex(productQueryID)
@@ -53,7 +60,33 @@ func (app *Application) AddToCart() gin.HandlerFunc{
 }
 
 func (app *Application) RemoveItem() gin.HandlerFunc{
+	return func(c *gin.Context){
+		productQueryID := c.Query("id")
+		if productQueryID == ""{
+			c.JSON(http.StatusBadRequest,ErrProductIDRequired.Error())
+			return 
+		}
 
+		userQueryID := c.Query("userID")
+		if userQueryID == ""{
+			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
+			return 
+		}
+
+		productID,err := primitive.ObjectIDFromHex(productQueryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,err.Error())
+			return 
+		}
+		var ctx,cancel = context.WithTimeout(context.Background(),5*time.Second)
+		defer cancel()
+		err = database.RemoveCartItem(ctx,app.userCollection,productID,userQueryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,err.Error())
+			return 
+		}
+		c.JSON(http.StatusOK,"Successfully removed from cart")
+	}
 }
 
 func (app *Application) GetItemFromCart() gin.HandlerFunc{
@@ -64,7 +97,7 @@ func (app *Application) BuyFromCart() gin.HandlerFunc{
 	return func(c *gin.Context){
 		userQueryID := c.Query("id")
 		if userQueryID == ""{
-			c.JSON(http.StatusBadRequest,"UserID is required")
+			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
 		}
 		var ctx,cancel = context.WithTimeout(context.Background(),100*time.Second)
@@ -82,12 +115,12 @@ func (app *Application) InstantBuy() gin.HandlerFunc{
 	return func(c *gin.Context){
 		userQueryID := c.Query("userid")
 		if userQueryID == ""{
-			c.JSON(http.StatusBadRequest,"User ID required")
+			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
 		}
 		productQueryID := c.Query("pid")
 		if productQueryID == ""{
-			c.JSON(http.StatusBadRequest,"Product ID required")
+			c.JSON(http.StatusBadRequest,ErrProductIDRequired.Error())
 			return 
 		}
 		productID,err := primitive.ObjectIDFromHex(productQueryID)
