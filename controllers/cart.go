@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	ErrProductIDRequired = errors.New("Product ID required")
-	ErrUserIDRequired = errors.New("User ID required")
+	ErrProductIDRequired = errors.New("product ID required")
+	ErrUserIDRequired = errors.New("user ID required")
 
 
 )
@@ -117,7 +117,7 @@ func (app *Application) GetItemFromCart() gin.HandlerFunc{
 		filter_match := bson.D{{Key:"$match",Value:bson.D{primitive.E{Key:"_id",Value: userID}}}}
 		unwind := bson.D{{Key:"$unwind",Value:bson.D{primitive.E{Key:"path",Value: "$usercart"}}}}
 		grouping := bson.D{{Key:"$group",Value:bson.D{primitive.E{Key:"_id",Value: "$_id"},{Key:"total",Value:bson.D{primitive.E{Key:"$sum",Value:"$usercart.price"}}}}}}
-		
+
 		pointCursor,err := UserCollection.Aggregate(ctx,mongo.Pipeline{filter_match,unwind,grouping})
 
 		if err != nil {
