@@ -23,15 +23,40 @@ func NewApplication(prodCollection,userCollection *mongo.Collection) *Applicatio
 	}
 }
 
-func AddToCart() gin.HandlerFunc{
-	
+func (app *Application) AddToCart() gin.HandlerFunc{
+	return func(c *gin.Context){
+		productQueryID := c.Query("id")
+		if productQueryID == ""{
+			c.JSON(http.StatusBadRequest,"Product ID required")
+			return 
+		}
+		userQueryID := c.Query("userid")
+		if userQueryID == ""{
+			c.JSON(http.StatusBadRequest,"User ID required")
+			return 
+		}
+		productID,err := primitive.ObjectIDFromHex(productQueryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,err.Error())
+			return 
+		}
+		var ctx,cancel = context.WithTimeout(context.Background(),5*time.Second)
+		defer cancel()
+
+		err = database.AddProductToCart(ctx,app.prodCollection,app.userCollection,productID,userQueryID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError,err.Error())
+			return 
+		}
+		c.JSON(http.StatusOK,"Successfully Added to the cart")
+	}
 }
 
-func RemoveItem() gin.HandlerFunc{
+func (app *Application) RemoveItem() gin.HandlerFunc{
 
 }
 
-func GetItemFromCart() gin.HandlerFunc{
+func (app *Application) GetItemFromCart() gin.HandlerFunc{
 
 }
 
