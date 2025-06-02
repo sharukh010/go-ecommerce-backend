@@ -92,7 +92,7 @@ func (app *Application) RemoveItem() gin.HandlerFunc{
 	}
 }
 
-func (app *Application) GetItemFromCart() gin.HandlerFunc{
+func GetItemFromCart() gin.HandlerFunc{
 	return func(c *gin.Context) {
 		userQueryID := c.Query("id")
 		if userQueryID == ""{
@@ -109,7 +109,7 @@ func (app *Application) GetItemFromCart() gin.HandlerFunc{
 		defer cancel()
 
 		var filledCart models.User
-		err = app.userCollection.FindOne(ctx,bson.M{"_id":userID}).Decode(&filledCart)
+		err = UserCollection.FindOne(ctx,bson.M{"_id":userID}).Decode(&filledCart)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError,err.Error())
 			return 
@@ -137,7 +137,7 @@ func (app *Application) GetItemFromCart() gin.HandlerFunc{
 	}
 }
 
-func (app *Application) BuyFromCart() gin.HandlerFunc{
+func BuyFromCart() gin.HandlerFunc{
 	return func(c *gin.Context){
 		userQueryID := c.Query("id")
 		if userQueryID == ""{
