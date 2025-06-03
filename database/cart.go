@@ -99,7 +99,7 @@ func BuyItemFromCart(ctx context.Context,userCollection *mongo.Collection,userID
 		return ErrUserIDIsNotValid
 	}
 
-	if getUser.UserCart == nil {
+	if len(getUser.UserCart) == 0 {
 		return ErrCartIsEmpty
 	}
 
