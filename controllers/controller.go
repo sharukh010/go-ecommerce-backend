@@ -70,6 +70,7 @@ func SignUp() gin.HandlerFunc{
 
 		if count > 0{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"User already exists"})
+			return 
 		}
 
 		count,err = UserCollection.CountDocuments(ctx,bson.M{"phone":user.Phone})
