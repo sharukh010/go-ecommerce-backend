@@ -35,7 +35,7 @@ func NewApplication(prodCollection,userCollection *mongo.Collection) *Applicatio
 
 func (app *Application) AddToCart() gin.HandlerFunc{
 	return func(c *gin.Context){
-		productQueryID := c.Query("id")
+		productQueryID := c.Query("pid")
 		if productQueryID == ""{
 			c.JSON(http.StatusBadRequest,ErrProductIDRequired.Error())
 			return 
@@ -94,7 +94,7 @@ func (app *Application) RemoveItem() gin.HandlerFunc{
 
 func GetItemFromCart() gin.HandlerFunc{
 	return func(c *gin.Context) {
-		userQueryID := c.Query("id")
+		userQueryID := c.Query("userid")
 		if userQueryID == ""{
 			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
@@ -130,8 +130,9 @@ func GetItemFromCart() gin.HandlerFunc{
 		}
 
 		for _,json := range listing{
-			c.JSON(http.StatusOK,json["total"])
-			c.JSON(http.StatusOK,filledCart.UserCart)
+			// c.JSON(http.StatusOK,gin.H{json["total"]})
+			// c.JSON(http.StatusOK,filledCart.UserCart)
+			c.JSON(http.StatusOK,gin.H{"total":json["total"],"user_cart":filledCart.UserCart})
 		}
 
 	}

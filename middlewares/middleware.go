@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,14 +10,15 @@ import (
 
 func Authentication() gin.HandlerFunc{
 	return func (c *gin.Context)  {
-		ClientToken := strings.Split(c.Request.Header.Get("Authorization"), " ")[1]
-		fmt.Println(ClientToken)
-		
-		if ClientToken == ""{
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"No Authorization Header Provided"})
-			c.Abort()
+		ClientTokenArr := strings.Split(c.Request.Header.Get("Authorization"), " ")
+
+		if len(ClientTokenArr)<2 {
+			c.JSON(http.StatusBadRequest,gin.H{"error":"No Authorization Header Provided"})
 			return 
 		}
+
+		ClientToken := ClientTokenArr[1]
+
 		claims,err := tokens.ValidateToken(ClientToken)
 		if err != "" {
 			c.JSON(http.StatusBadRequest,gin.H{"error":err})
