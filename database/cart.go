@@ -20,6 +20,7 @@ var (
 	ErrCantRemoveItem = errors.New("cannot remove item from cart")
 	ErrCantGetItem = errors.New("cannot get item from cart")
 	ErrCantBuyCartItem = errors.New("cannot update the purchase")
+	ErrCartIsEmpty = errors.New("cannot buy cart is empty")
 )
 
 func AddProductToCart(ctx context.Context,prodCollection,userCollection *mongo.Collection,productID primitive.ObjectID,userID string) error {
@@ -68,7 +69,7 @@ func BuyItemFromCart(ctx context.Context,userCollection *mongo.Collection,userID
 		log.Println(err.Error())
 		return ErrUserIDIsNotValid
 	}
-	var getCartItems models.User 
+	var getUser models.User 
 	var orderCart models.Order 
 	orderCart.Order_ID = primitive.NewObjectID()
 	orderCart.Orderered_At = time.Now()
@@ -92,15 +93,18 @@ func BuyItemFromCart(ctx context.Context,userCollection *mongo.Collection,userID
 		price := userItem["total"]
 		totalPrice = price.(int32)
 	}
-	err = userCollection.FindOne(ctx,bson.D{primitive.E{Key:"_id",Value:id}}).Decode(&getCartItems)
+	err = userCollection.FindOne(ctx,bson.D{primitive.E{Key:"_id",Value:id}}).Decode(&getUser)
 	if err != nil {
 		log.Println(err.Error())
 		return ErrUserIDIsNotValid
 	}
 
+	if getUser.UserCart == nil {
+		return ErrCartIsEmpty
+	}
+
 	
-	
-	orderCart.Order_Cart = getCartItems.UserCart
+	orderCart.Order_Cart = getUser.UserCart
 	orderCart.Price = int(totalPrice)
 
 	filter := bson.D{primitive.E{Key:"_id",Value:id}}
