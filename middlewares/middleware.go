@@ -14,6 +14,7 @@ func Authentication() gin.HandlerFunc{
 
 		if len(ClientTokenArr)<2 {
 			c.JSON(http.StatusBadRequest,gin.H{"error":"No Authorization Header Provided"})
+			c.Abort()
 			return 
 		}
 
