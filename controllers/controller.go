@@ -184,7 +184,7 @@ func GetProducts() gin.HandlerFunc{
 
 		if err != nil {
 			log.Println(err.Error())
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError,err.Error())
 			return 
 		}
 
@@ -200,6 +200,7 @@ func GetProducts() gin.HandlerFunc{
 
 	}
 }
+
 
 func SearchProductByQuery() gin.HandlerFunc {
 	return func(c *gin.Context){

@@ -15,7 +15,7 @@ import (
 
 func AddAddress() gin.HandlerFunc{
 	return func(c *gin.Context){
-		user_id := c.Query("id")
+		user_id := c.Query("userid")
 		if user_id == ""{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"User ID required"})
 			return 
@@ -65,15 +65,17 @@ func AddAddress() gin.HandlerFunc{
 				fmt.Println(err)
 			}
 		}else{
-			c.JSON(http.StatusBadRequest,"Not allowed")
+			c.JSON(http.StatusBadRequest,"More than 2 Addresses are Not allowed")
+			return 
 		}
+		c.JSON(http.StatusOK,"Successfully added the Address")
 
 	}
 }
 
 func EditHomeAddress() gin.HandlerFunc{
 	return func(c *gin.Context){
-		user_id := c.Query("id")
+		user_id := c.Query("userid")
 		if user_id == ""{
 			c.JSON(http.StatusNotFound,gin.H{"error":"User Id required"})
 			return 
@@ -104,7 +106,7 @@ func EditHomeAddress() gin.HandlerFunc{
 
 func EditWorkAddress() gin.HandlerFunc{
 	return func(c *gin.Context){
-		user_id := c.Query("id")
+		user_id := c.Query("userid")
 		if user_id == ""{
 			c.JSON(http.StatusNotFound,gin.H{"error":"User ID required"})
 			return 
@@ -135,7 +137,7 @@ func EditWorkAddress() gin.HandlerFunc{
 
 func DeleteAddress() gin.HandlerFunc{
 	return func(c *gin.Context){
-		user_id := c.Query("id")
+		user_id := c.Query("userid")
 		if user_id == ""{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"User ID required"})
 			c.Abort()
@@ -158,7 +160,7 @@ func DeleteAddress() gin.HandlerFunc{
 			c.IndentedJSON(http.StatusNotFound,"User not found with given ID")
 			return 
 		}
-		c.IndentedJSON(http.StatusOK,"Successfully Deleted Address")
+		c.IndentedJSON(http.StatusOK,"Successfully Deleted Addresses")
 
 	}
 }
