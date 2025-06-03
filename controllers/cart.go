@@ -64,13 +64,13 @@ func (app *Application) AddToCart() gin.HandlerFunc{
 
 func (app *Application) RemoveItem() gin.HandlerFunc{
 	return func(c *gin.Context){
-		productQueryID := c.Query("id")
+		productQueryID := c.Query("pid")
 		if productQueryID == ""{
 			c.JSON(http.StatusBadRequest,ErrProductIDRequired.Error())
 			return 
 		}
 
-		userQueryID := c.Query("userID")
+		userQueryID := c.Query("userid")
 		if userQueryID == ""{
 			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
@@ -128,7 +128,6 @@ func GetItemFromCart() gin.HandlerFunc{
 			log.Println(err.Error())
 			c.JSON(http.StatusInternalServerError,"Error occured while fetching cart items")
 		}
-
 		for _,json := range listing{
 			c.JSON(http.StatusOK,gin.H{"total":json["total"],"user_cart":filledCart.UserCart})
 		}
@@ -138,7 +137,7 @@ func GetItemFromCart() gin.HandlerFunc{
 
 func (app *Application) BuyFromCart() gin.HandlerFunc{
 	return func(c *gin.Context){
-		userQueryID := c.Query("id")
+		userQueryID := c.Query("userid")
 		if userQueryID == ""{
 			c.JSON(http.StatusBadRequest,ErrUserIDRequired.Error())
 			return 
