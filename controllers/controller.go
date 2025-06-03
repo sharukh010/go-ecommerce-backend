@@ -137,7 +137,11 @@ func Login() gin.HandlerFunc{
 			fmt.Println(msg)
 			return 
 		}
-		token,refreshToken,_ := generate.TokenGenerator(*foundUser.Email,*foundUser.First_Name,*foundUser.Last_Name,foundUser.User_ID)
+		token,refreshToken,tkErr:= generate.TokenGenerator(*foundUser.Email,*foundUser.First_Name,*foundUser.Last_Name,foundUser.User_ID)
+		if tkErr != nil {
+			c.JSON(http.StatusInternalServerError,tkErr.Error())
+			return
+		}
 		generate.UpdateAllTokens(token,refreshToken,foundUser.User_ID)
 		c.JSON(http.StatusFound,foundUser)
 	}

@@ -42,16 +42,16 @@ func TokenGenerator(email string,firstName string,lastName string,uid string)(si
 		},
 	}
 
-	token,err := jwt.NewWithClaims(jwt.SigningMethodES256,claims).SignedString([]byte(SECRET_KEY))
+	token,err := jwt.NewWithClaims(jwt.SigningMethodHS256,claims).SignedString([]byte(SECRET_KEY))
 
 	if err != nil{
 		return "","",err
 	}
 
-	refreshToken,err := jwt.NewWithClaims(jwt.SigningMethodES256,refreshClaims).SignedString([]byte(SECRET_KEY))
+	refreshToken,err := jwt.NewWithClaims(jwt.SigningMethodHS256,refreshClaims).SignedString([]byte(SECRET_KEY))
 
 	if err != nil {
-		return 
+		return "","",err
 	}
 
 	return token,refreshToken,err
