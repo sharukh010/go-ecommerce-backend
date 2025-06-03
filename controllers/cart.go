@@ -130,8 +130,6 @@ func GetItemFromCart() gin.HandlerFunc{
 		}
 
 		for _,json := range listing{
-			// c.JSON(http.StatusOK,gin.H{json["total"]})
-			// c.JSON(http.StatusOK,filledCart.UserCart)
 			c.JSON(http.StatusOK,gin.H{"total":json["total"],"user_cart":filledCart.UserCart})
 		}
 
